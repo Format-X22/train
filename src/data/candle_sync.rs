@@ -6,15 +6,15 @@ use std::cell::RefCell;
 use std::thread::sleep;
 use std::time::Duration;
 
-pub struct CandleSync {
-    database: RefCell<Database>,
-    stock: RefCell<Stock>,
+pub struct CandleSync<'a> {
+    database: &'a RefCell<Database>,
+    stock: &'a RefCell<Stock>,
 }
 
 const SYNC_FROM: &str = "2021-06-01T00:00:00-00:00";
 
-impl CandleSync {
-    pub fn new(database: RefCell<Database>, stock: RefCell<Stock>) -> Self {
+impl<'a> CandleSync<'a> {
+    pub fn new(database: &'a RefCell<Database>, stock: &'a RefCell<Stock>) -> Self {
         Self { database, stock }
     }
 

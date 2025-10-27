@@ -1,3 +1,4 @@
+use crate::analyse::simulator::{Simulator, SimulatorConfig};
 use crate::config::{Config, ENV_PREFIX};
 use crate::data::candle_sync::CandleSync;
 use crate::data::database::Database;
@@ -7,6 +8,7 @@ use env_logger::{Builder, Target};
 use log::{LevelFilter, info};
 use std::cell::RefCell;
 
+mod analyse;
 mod config;
 mod data;
 mod trade;
@@ -21,13 +23,23 @@ fn main() {
     let database_cell = RefCell::new(database);
     let stock = Stock::new(config.public_key, config.private_key);
     let stock_cell = RefCell::new(stock);
-    let candle_sync = CandleSync::new(database_cell, stock_cell);
+    let candle_sync = CandleSync::new(&database_cell, &stock_cell);
 
     candle_sync.sync();
 
     if config.is_simulator {
         info!("Start simulator...");
-        // TODO simulate
+        
+        let simulator_config = SimulatorConfig {
+            padding_percent: config.padding_percent,
+            stop_percent: config.stop_percent,
+            capital_percent: config.capital_percent,
+        };
+        let simulator = Simulator::new(&database_cell, simulator_config);
+        
+        simulator.simulate();
+        
+        info!("Simulation done!");
     } else {
         info!("Start trading...");
         // TODO run

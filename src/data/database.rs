@@ -85,12 +85,11 @@ impl Database {
             .expect("Fatal on insert candles");
     }
 
-    pub fn get_candles(&self, order: Order, limit: i32) -> Vec<Candle> {
-        let order_string = order.to_string();
+    pub fn get_candles(&self, limit: i32) -> Vec<Candle> {
         let query =
-            format!("SELECT * FROM `candles` ORDER BY `timestamp` {order_string} LIMIT {limit}");
+            format!("SELECT * FROM `candles` ORDER BY `timestamp` DESC LIMIT {limit}");
 
-        self.connection
+        let mut candles: Vec<Candle> = self.connection
             .prepare(query)
             .expect("On build query for candles list")
             .into_iter()
@@ -105,6 +104,9 @@ impl Database {
                     close: raw_row.read::<f64, _>("close"),
                 }
             })
-            .collect()
+            .collect();
+        
+        candles.reverse();
+        candles
     }
 }

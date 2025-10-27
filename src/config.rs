@@ -21,4 +21,7 @@ pub struct Config {
     pub public_key: String,
     pub private_key: String,
     pub is_simulator: bool,
+    pub padding_percent: f64,
+    pub stop_percent: f64,
+    pub capital_percent: f64,
 }
