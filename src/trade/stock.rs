@@ -43,12 +43,15 @@ impl Stock {
         }
     }
 
-    pub fn get_candles(&self) -> Result<Vec<Candle>, Whatever> {
+    pub fn get_candles(&self, from: i64) -> Result<Vec<Candle>, Whatever> {
         let point = "market/kline";
+        let from = from.to_string();
         let params = HashMap::from([
             ("category", "linear"),
             ("symbol", "BTCUSDT"),
             ("interval", "60"),
+            ("start", &from),
+            ("limit", "1000"),
         ]);
 
         let response = self.call_with_get(point, params)?;
