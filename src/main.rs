@@ -1,17 +1,25 @@
-use crate::analyse::simulator::{Simulator, SimulatorConfig};
+mod candle;
+mod config;
+mod database;
+mod deal;
+mod dto;
+mod simulator;
+mod stock;
+mod trade_state;
+mod trader;
+
+use crate::candle::Candle;
 use crate::config::{Config, ENV_PREFIX};
-use crate::data::candle_sync::CandleSync;
-use crate::data::database::Database;
-use crate::trade::stock::Stock;
+use crate::database::Database;
+use crate::simulator::simulate;
+use crate::stock::Stock;
+use crate::trade_state::TradeState;
+use crate::trader::trade;
 use dotenvy::dotenv;
 use env_logger::{Builder, Target};
 use log::{LevelFilter, info};
-use std::cell::RefCell;
-
-mod analyse;
-mod config;
-mod data;
-mod trade;
+use std::thread::sleep;
+use std::time::Duration;
 
 fn main() {
     let config = parse_envs();
@@ -20,29 +28,18 @@ fn main() {
     info!("Boot...");
 
     let database = Database::new();
-    let database_cell = RefCell::new(database);
     let stock = Stock::new(config.public_key, config.private_key);
-    let stock_cell = RefCell::new(stock);
-    let candle_sync = CandleSync::new(&database_cell, &stock_cell);
-
-    candle_sync.sync();
 
     if config.is_simulator {
-        info!("Start simulator...");
-        
-        let simulator_config = SimulatorConfig {
-            padding_percent: config.padding_percent,
-            stop_percent: config.stop_percent,
-            capital_percent: config.capital_percent,
-        };
-        let simulator = Simulator::new(&database_cell, simulator_config);
-        
-        simulator.simulate();
-        
-        info!("Simulation done!");
+        simulate(
+            &database,
+            &stock,
+            config.padding_percent,
+            config.stop_percent,
+            config.capital_percent,
+        );
     } else {
-        info!("Start trading...");
-        // TODO run
+        trade(&database, &stock);
     }
 }
 

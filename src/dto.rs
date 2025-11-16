@@ -1,6 +1,6 @@
-use crate::data::candle::RawCandle;
 use serde::Deserialize;
 use serde_this_or_that::as_f64;
+use crate::candle::RawCandle;
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]

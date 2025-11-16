@@ -1,5 +1,3 @@
-use crate::data::candle::Candle;
-use crate::trade::dto::{BalanceData, BasicResponse, CandlesData};
 use chrono::Utc;
 use hmac::{Hmac, KeyInit, Mac};
 use reqwest::blocking::{Client, RequestBuilder, Response};
@@ -7,6 +5,8 @@ use sha2::Sha256;
 use snafu::Whatever;
 use snafu::prelude::*;
 use std::collections::HashMap;
+use crate::candle::Candle;
+use crate::dto::{BalanceData, BasicResponse, CandlesData};
 
 type HmacSha256 = Hmac<Sha256>;
 
