@@ -25,7 +25,7 @@ pub fn simulate(
     TradeState::truncate(database);
     Deal::truncate(database);
 
-    let candles = Candle::get_candles(database, 100_000);
+    let candles = Candle::get_candles(database, 10);
     let first_timestamp = candles.first().expect("Empty candles collection").timestamp;
 
     let first_trade_state = TradeState {
@@ -54,8 +54,7 @@ pub fn simulate(
         handle_candle(database, candle, &sim_config);
     }
 
-    // TODO Print stats
-
+    print_results(database);
     info!("Done!");
 }
 
@@ -74,13 +73,13 @@ fn handle_candle(database: &Database, candle: Candle, sim_config: &SimConfig) {
         match deal.status {
             DealStatus::Initial => {
                 if candle.high > deal.sell_stop_price {
-                    handle_fail_sell(database, &mut deal, &mut trade_state, sim_config);
+                    //handle_fail_sell(database, &mut deal, &mut trade_state, sim_config);
                     trade_state.awaited_deals -= 1;
                 } else if candle.low < deal.buy_stop_price {
-                    handle_fail_buy(database, &mut deal, &mut trade_state, sim_config);
+                    //handle_fail_buy(database, &mut deal, &mut trade_state, sim_config);
                     trade_state.awaited_deals -= 1;
                 } else if candle.high > deal.sell_price && candle.low < deal.buy_price {
-                    handle_profit(database, &mut deal, &mut trade_state, sim_config);
+                    //handle_profit(database, &mut deal, &mut trade_state, sim_config);
                     trade_state.awaited_deals -= 1;
                 } else if candle.high > deal.sell_price {
                     // TODO
@@ -96,10 +95,10 @@ fn handle_candle(database: &Database, candle: Candle, sim_config: &SimConfig) {
             }
             DealStatus::FilledBuy => {
                 if candle.low < deal.buy_stop_price {
-                    handle_fail_buy(database, &mut deal, &mut trade_state, sim_config);
+                    //handle_fail_buy(database, &mut deal, &mut trade_state, sim_config);
                     trade_state.stuck_deals -= 1;
                 } else if candle.high > deal.sell_price {
-                    handle_profit(database, &mut deal, &mut trade_state, sim_config);
+                    //handle_profit(database, &mut deal, &mut trade_state, sim_config);
                     trade_state.stuck_deals -= 1;
                 } else {
                     // TODO
@@ -107,10 +106,10 @@ fn handle_candle(database: &Database, candle: Candle, sim_config: &SimConfig) {
             }
             DealStatus::FilledSell => {
                 if candle.high > deal.sell_stop_price {
-                    handle_fail_sell(database, &mut deal, &mut trade_state, sim_config);
+                    //handle_fail_sell(database, &mut deal, &mut trade_state, sim_config);
                     trade_state.stuck_deals -= 1;
                 } else if candle.low < deal.buy_price {
-                    handle_profit(database, &mut deal, &mut trade_state, sim_config);
+                    //handle_profit(database, &mut deal, &mut trade_state, sim_config);
                     trade_state.stuck_deals -= 1;
                 } else {
                     // TODO
@@ -181,4 +180,23 @@ fn handle_fail_sell(
     sim_config: &SimConfig,
 ) {
     //
+}
+
+fn print_results(database: &Database) {
+    let state = TradeState::get_last_state(database);
+
+    let last_date = DateTime::from_timestamp_millis(state.timestamp)
+        .unwrap()
+        .with_timezone(&Local)
+        .format("%Y-%m-%d %H:%M");
+
+    let mut results = Vec::new();
+
+    results.push(format!("Final at {}", last_date));
+    results.push(format!("Trade capital = {:.0}", state.trade_capital));
+    results.push(format!("Available = {:.0}", state.available_capital));
+    results.push(format!("Stuck deals = {}", state.stuck_deals));
+    results.push(format!("Awaited = {}", state.awaited_deals));
+
+    info!("{}", results.join("\n"));
 }

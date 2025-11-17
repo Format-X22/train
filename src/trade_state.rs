@@ -49,8 +49,6 @@ impl TradeState {
         let result = database.get(query);
         let row = result.first().expect("Empty trade_states collection");
 
-        info!("{}", row.read::<f64, _>("available_capital"));
-
         TradeState {
             timestamp: row.read("timestamp"),
             trade_capital: row.read("trade_capital"),

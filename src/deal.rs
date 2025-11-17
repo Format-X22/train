@@ -73,9 +73,7 @@ impl Deal {
             sell_price: row.read("sell_price"),
             sell_stop_price: row.read("sell_stop_price"),
         });
-
-        info!("{}", converted.len());
-
+        
         converted.collect()
     }
 
