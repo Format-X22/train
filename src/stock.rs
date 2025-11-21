@@ -1,3 +1,5 @@
+use crate::candle::Candle;
+use crate::dto::{BasicResponse, CandlesData, PlaceOrderData};
 use chrono::Utc;
 use hmac::{Hmac, KeyInit, Mac};
 use reqwest::blocking::{Client, RequestBuilder, Response};
@@ -5,13 +7,18 @@ use sha2::Sha256;
 use snafu::Whatever;
 use snafu::prelude::*;
 use std::collections::HashMap;
-use crate::candle::Candle;
-use crate::dto::{BalanceData, BasicResponse, CandlesData};
+use strum_macros::Display;
 
 type HmacSha256 = Hmac<Sha256>;
 
 const RECV_WINDOW: &str = "5000";
 const API: &str = "https://api.bybit.com/v5";
+
+#[derive(Display, Copy, Clone)]
+pub enum Side {
+    Buy,
+    Sell,
+}
 
 pub struct Stock {
     public_key: String,
@@ -28,30 +35,13 @@ impl Stock {
         }
     }
 
-    pub fn get_balance(&self) -> Result<f64, Whatever> {
-        let point = "account/wallet-balance";
-        let params = HashMap::from([("accountType", "UNIFIED")]);
-        let response = self.call_with_get(point, params)?;
-        let parsed = response
-            .json::<BalanceData>()
-            .whatever_context("On parse balance data")?;
-        let data = self.check_and_extract_data(parsed)?;
-
-        match data.list.first() {
-            None => whatever!("No data in balance response"),
-            Some(balance) => Ok(balance.total_available_balance),
-        }
-    }
-
-    pub fn get_candles(&self, from: i64) -> Result<Vec<Candle>, Whatever> {
+    pub fn get_candles(&self, ticker: &str) -> Result<Vec<Candle>, Whatever> {
         let point = "market/kline";
-        let from = from.to_string();
         let params = HashMap::from([
             ("category", "linear"),
-            ("symbol", "BTCUSDT"),
+            ("symbol", ticker),
             ("interval", "60"),
-            ("start", &from),
-            ("limit", "1000"),
+            ("limit", "10"),
         ]);
 
         let response = self.call_with_get(point, params)?;
@@ -67,6 +57,36 @@ impl Stock {
         data.reverse();
 
         Ok(data)
+    }
+
+    pub fn place_order(
+        &self,
+        ticker: &str,
+        side: Side,
+        price: f64,
+        price_decimals: usize,
+        amount: f64,
+    ) -> Result<(), Whatever> {
+        let qty = amount.to_string();
+        let price = format!("{:.1$}", price, price_decimals);
+        let side = side.to_string();
+        let order_params = HashMap::from([
+            ("category", "linear"),
+            ("symbol", ticker),
+            ("side", &side),
+            ("orderType", "Limit"),
+            ("qty", &qty),
+            ("price", &price),
+        ]);
+
+        let main_response = self.call_with_post("order/create", order_params)?;
+        let main_parsed = main_response
+            .json::<PlaceOrderData>()
+            .whatever_context("On parse json for place order")?;
+
+        self.check_and_extract_data(main_parsed)?;
+
+        Ok(())
     }
 
     fn call_with_get(
