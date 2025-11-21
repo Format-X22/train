@@ -5,12 +5,6 @@ use snafu::{ResultExt, Whatever};
 pub struct Candle {
     pub timestamp: i64,
     pub open: f64,
-    #[allow(dead_code)]
-    pub high: f64,
-    #[allow(dead_code)]
-    pub low: f64,
-    #[allow(dead_code)]
-    pub close: f64,
 }
 
 impl Candle {
@@ -18,20 +12,17 @@ impl Candle {
         Ok(Candle {
             timestamp: raw.0.parse().whatever_context("On parse timestamp")?,
             open: raw.1.parse().whatever_context("On parse open")?,
-            high: raw.2.parse().whatever_context("On parse high")?,
-            low: raw.3.parse().whatever_context("On parse low")?,
-            close: raw.4.parse().whatever_context("On parse close")?,
         })
     }
 }
 
 #[derive(Deserialize)]
 pub struct RawCandle(
-    pub String,                 // Date
-    pub String,                 // Open
-    pub String,                 // High
-    pub String,                 // Low
-    pub String,                 // Close
-    #[allow(dead_code)] String, // Volume
-    #[allow(dead_code)] String, // Turnover
+    pub String,                     // Date
+    pub String,                     // Open
+    #[allow(dead_code)] pub String, // High
+    #[allow(dead_code)] pub String, // Low
+    #[allow(dead_code)] pub String, // Close
+    #[allow(dead_code)] String,     // Volume
+    #[allow(dead_code)] String,     // Turnover
 );
