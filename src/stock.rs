@@ -89,7 +89,7 @@ impl Stock {
         Ok(())
     }
 
-    fn call_with_get(
+    pub fn call_with_get(
         &self,
         point: &str,
         params: HashMap<&str, &str>,
@@ -107,7 +107,7 @@ impl Stock {
         self.handle_status(response)
     }
 
-    fn call_with_post(
+    pub fn call_with_post(
         &self,
         point: &str,
         params: HashMap<&str, &str>,
@@ -125,6 +125,14 @@ impl Stock {
             .whatever_context(format!("On POST request to {path}"))?;
 
         self.handle_status(response)
+    }
+
+    pub fn check_and_extract_data<T>(&self, parsed: BasicResponse<T>) -> Result<T, Whatever> {
+        if parsed.ret_code == 0 {
+            Ok(parsed.result)
+        } else {
+            whatever!("{}", parsed.ret_msg)
+        }
     }
 
     fn generate_signature(&self, timestamp: i64, params: String) -> Result<String, Whatever> {
@@ -169,14 +177,6 @@ impl Stock {
             Ok(response)
         } else {
             whatever!("{}", response.status())
-        }
-    }
-
-    fn check_and_extract_data<T>(&self, parsed: BasicResponse<T>) -> Result<T, Whatever> {
-        if parsed.ret_code == 0 {
-            Ok(parsed.result)
-        } else {
-            whatever!("{}", parsed.ret_msg)
         }
     }
 }
