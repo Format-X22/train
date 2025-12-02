@@ -9,6 +9,7 @@ pub fn run_simulation(
     order_size: f64,
     padding_percent: f64,
     order_decimals: usize,
+    stop_percent: f64,
 ) {
     let candles = get_candles(&stock, &ticker);
 

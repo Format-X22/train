@@ -21,7 +21,7 @@ fn main() {
     info!("Boot...");
 
     let stock = Stock::new(config.public_key, config.private_key);
-    
+
     if config.is_simulation {
         run_simulation(
             stock,
@@ -29,6 +29,7 @@ fn main() {
             config.order_size,
             config.padding_percent,
             config.order_decimals,
+            config.simulator_stop_percent,
         )
     } else {
         let mut trader = Trader::new(

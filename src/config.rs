@@ -25,4 +25,5 @@ pub struct Config {
     pub order_size: f64,
     pub order_decimals: usize,
     pub is_simulation: bool,
+    pub simulator_stop_percent: f64,
 }
