@@ -22,7 +22,7 @@ pub struct Config {
     pub private_key: String,
     pub ticker: String,
     pub padding_percent: f64,
-    pub order_sell_size: f64,
-    pub order_buy_size: f64,
+    pub capital_size: f64,
+    pub capital_percent: f64,
     pub order_decimals: usize,
 }

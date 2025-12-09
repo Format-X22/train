@@ -22,9 +22,9 @@ fn main() {
     let mut trader = Trader::new(
         stock,
         config.ticker,
-        config.order_sell_size,
-        config.order_buy_size,
         config.padding_percent,
+        config.capital_size,
+        config.capital_percent,
         config.order_decimals,
     );
 

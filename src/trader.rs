@@ -9,8 +9,7 @@ pub struct Trader {
     stock: Stock,
     ticker: String,
     padding_percent: f64,
-    order_sell_size: f64,
-    order_buy_size: f64,
+    capital_for_order: f64,
     order_decimals: usize,
     last_candle_timestamp: i64,
 }
@@ -19,17 +18,16 @@ impl Trader {
     pub fn new(
         stock: Stock,
         ticker: String,
-        order_sell_size: f64,
-        order_buy_size: f64,
         padding_percent: f64,
+        capital_size: f64,
+        capital_percent: f64,
         order_decimals: usize,
     ) -> Self {
         Self {
             stock,
             ticker,
             padding_percent,
-            order_sell_size,
-            order_buy_size,
+            capital_for_order: capital_size * (capital_percent / 100.0),
             order_decimals,
             last_candle_timestamp: Utc::now().timestamp_millis(),
         }
@@ -42,9 +40,10 @@ impl Trader {
             let padding_size = base_price * (self.padding_percent / 100.0);
             let buy_price = base_price - padding_size;
             let sell_price = base_price + padding_size;
+            let amount = self.capital_for_order / base_price;
 
-            self.place_order(Side::Buy, buy_price, self.order_buy_size);
-            self.place_order(Side::Sell, sell_price, self.order_sell_size);
+            self.place_order(Side::Buy, buy_price, amount);
+            self.place_order(Side::Sell, sell_price, amount);
 
             info!("New orders placed");
 
