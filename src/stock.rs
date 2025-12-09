@@ -67,7 +67,7 @@ impl Stock {
         price_decimals: usize,
         amount: f64,
     ) -> Result<(), Whatever> {
-        let qty = amount.to_string();
+        let qty = format!("{:.1$}", amount, price_decimals);
         let price = format!("{:.1$}", price, price_decimals);
         let side = side.to_string();
         let order_params = HashMap::from([
