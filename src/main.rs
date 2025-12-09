@@ -1,12 +1,10 @@
 mod candle;
 mod config;
 mod dto;
-mod simulator;
 mod stock;
 mod trader;
 
 use crate::config::{Config, ENV_PREFIX};
-use crate::simulator::runner::run_simulation;
 use crate::stock::Stock;
 use crate::trader::Trader;
 use dotenvy::dotenv;
@@ -21,27 +19,16 @@ fn main() {
     info!("Boot...");
 
     let stock = Stock::new(config.public_key, config.private_key);
+    let mut trader = Trader::new(
+        stock,
+        config.ticker,
+        config.order_sell_size,
+        config.order_buy_size,
+        config.padding_percent,
+        config.order_decimals,
+    );
 
-    if config.is_simulation {
-        run_simulation(
-            stock,
-            config.ticker,
-            config.order_size,
-            config.padding_percent,
-            config.order_decimals,
-            config.simulator_stop_percent,
-        )
-    } else {
-        let mut trader = Trader::new(
-            stock,
-            config.ticker,
-            config.order_size,
-            config.padding_percent,
-            config.order_decimals,
-        );
-
-        trader.trade();
-    }
+    trader.trade();
 }
 
 fn parse_envs() -> Config {
