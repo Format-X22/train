@@ -10,6 +10,8 @@ use sha2::Sha256;
 use snafu::Whatever;
 use snafu::prelude::*;
 use std::collections::HashMap;
+use std::thread::sleep;
+use std::time::Duration;
 use strum_macros::Display;
 
 type HmacSha256 = Hmac<Sha256>;
@@ -73,33 +75,43 @@ impl Stock {
 
         match data.list.first() {
             None => whatever!("Empty balance response!"),
-            Some(balance) => Ok(balance.total_available_balance),
+            Some(balance) => Ok(balance.total_margin_balance),
         }
     }
 
     pub fn get_orders_count_by_side(&self, ticker: &str) -> Result<OrdersCountBySide, Whatever> {
-        let point = "order/realtime";
-        let params = HashMap::from([
-            ("category", "linear"),
-            ("symbol", ticker),
-            ("openOnly", "0"),
-            ("orderFilter", "Order"),
-        ]);
-        let response = self.call_with_get(point, params)?;
-        let parsed = response
-            .json::<OrdersData>()
-            .whatever_context("On parse json for balance")?;
-        let data = self.check_and_extract_data(parsed)?;
         let mut result = OrdersCountBySide { sell: 0, buy: 0 };
+        let mut cursor = "".to_string();
 
-        for order in data.list {
-            match order.side {
-                Side::Buy => result.buy += 1,
-                Side::Sell => result.sell += 1,
+        loop {
+            let point = "order/realtime";
+            let params = HashMap::from([
+                ("category", "linear"),
+                ("symbol", ticker),
+                ("openOnly", "0"),
+                ("orderFilter", "Order"),
+                ("cursor", &cursor),
+            ]);
+            let response = self.call_with_get(point, params)?;
+            let parsed = response
+                .json::<OrdersData>()
+                .whatever_context("On parse json for balance")?;
+            let data = self.check_and_extract_data(parsed)?;
+
+            cursor = data.next_page_cursor;
+
+            for order in data.list {
+                match order.side {
+                    Side::Buy => result.buy += 1,
+                    Side::Sell => result.sell += 1,
+                }
             }
-        }
 
-        Ok(result)
+            if cursor.len() == 0 {
+                return Ok(result);
+            }
+            sleep(Duration::from_millis(100));
+        }
     }
 
     pub fn place_order(

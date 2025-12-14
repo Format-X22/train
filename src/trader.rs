@@ -45,7 +45,8 @@ impl Trader {
             let padding_size = base_price * (self.padding_percent / 100.0);
             let buy_price = base_price - padding_size;
             let sell_price = base_price + padding_size;
-            let capital_for_order = self.get_balance() * (self.capital_percent / 100.0);
+            let balance = self.get_balance();
+            let capital_for_order = balance * (self.capital_percent / 100.0);
             let base_amount = capital_for_order / base_price;
             let current_orders_count = self.get_orders_count_by_side();
             let waited_count = i32::max(current_orders_count.buy, current_orders_count.sell);
