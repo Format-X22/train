@@ -78,7 +78,7 @@ impl Stock {
     }
 
     pub fn get_orders_count_by_side(&self, ticker: &str) -> Result<OrdersCountBySide, Whatever> {
-        let point = "/v5/order/realtime";
+        let point = "order/realtime";
         let params = HashMap::from([
             ("category", "linear"),
             ("symbol", ticker),
