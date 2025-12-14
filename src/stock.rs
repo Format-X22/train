@@ -1,8 +1,11 @@
 use crate::candle::Candle;
-use crate::dto::{BasicResponse, CandlesData, PlaceOrderData};
+use crate::dto::{
+    BalanceData, BasicResponse, CandlesData, OrdersCountBySide, OrdersData, PlaceOrderData,
+};
 use chrono::Utc;
 use hmac::{Hmac, KeyInit, Mac};
 use reqwest::blocking::{Client, RequestBuilder, Response};
+use serde::Deserialize;
 use sha2::Sha256;
 use snafu::Whatever;
 use snafu::prelude::*;
@@ -14,7 +17,7 @@ type HmacSha256 = Hmac<Sha256>;
 const RECV_WINDOW: &str = "5000";
 const API: &str = "https://api.bybit.com/v5";
 
-#[derive(Display, Copy, Clone)]
+#[derive(Display, Copy, Clone, Deserialize)]
 pub enum Side {
     Buy,
     Sell,
@@ -57,6 +60,46 @@ impl Stock {
         data.reverse();
 
         Ok(data)
+    }
+
+    pub fn get_balance(&self) -> Result<f64, Whatever> {
+        let point = "account/wallet-balance";
+        let params = HashMap::from([("accountType", "UNIFIED")]);
+        let response = self.call_with_get(point, params)?;
+        let parsed = response
+            .json::<BalanceData>()
+            .whatever_context("On parse json for balance")?;
+        let data = self.check_and_extract_data(parsed)?;
+
+        match data.list.first() {
+            None => whatever!("Empty balance response!"),
+            Some(balance) => Ok(balance.total_available_balance),
+        }
+    }
+
+    pub fn get_orders_count_by_side(&self, ticker: &str) -> Result<OrdersCountBySide, Whatever> {
+        let point = "/v5/order/realtime";
+        let params = HashMap::from([
+            ("category", "linear"),
+            ("symbol", ticker),
+            ("openOnly", "0"),
+            ("orderFilter", "Order"),
+        ]);
+        let response = self.call_with_get(point, params)?;
+        let parsed = response
+            .json::<OrdersData>()
+            .whatever_context("On parse json for balance")?;
+        let data = self.check_and_extract_data(parsed)?;
+        let mut result = OrdersCountBySide { sell: 0, buy: 0 };
+
+        for order in data.list {
+            match order.side {
+                Side::Buy => result.buy += 1,
+                Side::Sell => result.sell += 1,
+            }
+        }
+
+        Ok(result)
     }
 
     pub fn place_order(

@@ -23,7 +23,6 @@ fn main() {
         stock,
         config.ticker,
         config.padding_percent,
-        config.capital_size,
         config.capital_percent,
         config.order_decimals,
     );
