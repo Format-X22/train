@@ -13,6 +13,7 @@ pub struct Trader {
     capital_percent: f64,
     minimum_size: f64,
     order_decimals: usize,
+    price_decimals: usize,
     last_candle_timestamp: i64,
 }
 
@@ -23,6 +24,7 @@ impl Trader {
         padding_percent: f64,
         capital_percent: f64,
         order_decimals: usize,
+        price_decimals: usize,
     ) -> Self {
         let pow_back = -(order_decimals as i32);
         let minimum_size = 1.0 * 10.0_f64.powi(pow_back);
@@ -34,6 +36,7 @@ impl Trader {
             capital_percent,
             minimum_size,
             order_decimals,
+            price_decimals,
             last_candle_timestamp: Utc::now().timestamp_millis(),
         }
     }
@@ -92,10 +95,14 @@ impl Trader {
 
     fn place_order(&self, side: Side, price: f64, amount: f64) {
         loop {
-            match self
-                .stock
-                .place_order(&self.ticker, side, price, self.order_decimals, amount)
-            {
+            match self.stock.place_order(
+                &self.ticker,
+                side,
+                price,
+                self.order_decimals,
+                self.price_decimals,
+                amount,
+            ) {
                 Ok(_) => return (),
                 Err(error) => {
                     error!("Problem with place order - {side} {price} {amount} - {error}")

@@ -24,4 +24,5 @@ pub struct Config {
     pub padding_percent: f64,
     pub capital_percent: f64,
     pub order_decimals: usize,
+    pub price_decimals: usize,
 }

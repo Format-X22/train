@@ -25,6 +25,7 @@ fn main() {
         config.padding_percent,
         config.capital_percent,
         config.order_decimals,
+        config.price_decimals,
     );
 
     trader.trade();
