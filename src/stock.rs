@@ -45,7 +45,7 @@ impl Stock {
         let params = HashMap::from([
             ("category", "linear"),
             ("symbol", ticker),
-            ("interval", "60"),
+            ("interval", "1"),
             ("limit", "10"),
         ]);
 
@@ -110,7 +110,7 @@ impl Stock {
             if cursor.len() == 0 {
                 return Ok(result);
             }
-            sleep(Duration::from_millis(100));
+            sleep(Duration::from_millis(10));
         }
     }
 

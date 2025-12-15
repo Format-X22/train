@@ -63,7 +63,7 @@ impl Trader {
                 info!("New minimal orders placed");
             }
 
-            sleep(Duration::from_secs(5));
+            sleep(Duration::from_millis(100));
         }
     }
 
@@ -86,7 +86,7 @@ impl Trader {
                     error!("Problem with load candles - {error}")
                 }
             }
-            sleep(Duration::from_secs(5));
+            sleep(Duration::from_millis(500));
         }
     }
 
@@ -101,7 +101,7 @@ impl Trader {
                     error!("Problem with place order - {side} {price} {amount} - {error}")
                 }
             }
-            sleep(Duration::from_secs(5));
+            sleep(Duration::from_millis(500));
         }
     }
 
@@ -113,7 +113,7 @@ impl Trader {
                     error!("Problem with get balance - {error}")
                 }
             }
-            sleep(Duration::from_secs(5));
+            sleep(Duration::from_millis(500));
         }
     }
 
@@ -125,7 +125,7 @@ impl Trader {
                     error!("Problem with get orders counts - {error}")
                 }
             }
-            sleep(Duration::from_secs(5));
+            sleep(Duration::from_millis(500));
         }
     }
 }
