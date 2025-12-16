@@ -3,6 +3,7 @@ mod config;
 mod dto;
 mod stock;
 mod trader;
+mod utils;
 
 use crate::config::{Config, ENV_PREFIX};
 use crate::stock::Stock;

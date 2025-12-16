@@ -1,10 +1,14 @@
 use crate::candle::Candle;
 use crate::dto::OrdersCountBySide;
 use crate::stock::{Side, Stock};
+use crate::{repeat_each_ms, with_retry};
 use chrono::Utc;
 use log::{error, info};
 use std::thread::sleep;
 use std::time::Duration;
+
+const RETRY_MS: u64 = 500;
+const TRADE_LOOP_MS: u64 = 100;
 
 pub struct Trader {
     stock: Stock,
@@ -42,7 +46,7 @@ impl Trader {
     }
 
     pub fn trade(&mut self) {
-        loop {
+        repeat_each_ms!(TRADE_LOOP_MS, {
             let candle = self.get_new_candle();
             let base_price = candle.open;
             let padding_size = base_price * (self.padding_percent / 100.0);
@@ -65,19 +69,17 @@ impl Trader {
             } else {
                 info!("New minimal orders placed");
             }
-
-            sleep(Duration::from_millis(100));
-        }
+        })
     }
 
     fn get_new_candle(&mut self) -> Candle {
-        loop {
+        repeat_each_ms!(
+            RETRY_MS,
             match self.stock.get_candles(&self.ticker) {
                 Ok(candles) => match candles.last() {
                     Some(candle) => {
                         if candle.timestamp > self.last_candle_timestamp {
                             self.last_candle_timestamp = candle.timestamp;
-
                             return *candle;
                         }
                     }
@@ -89,50 +91,37 @@ impl Trader {
                     error!("Problem with load candles - {error}")
                 }
             }
-            sleep(Duration::from_millis(500));
-        }
+        )
     }
 
     fn place_order(&self, side: Side, price: f64, amount: f64) {
-        loop {
-            match self.stock.place_order(
+        with_retry!(
+            RETRY_MS,
+            self.stock.place_order(
                 &self.ticker,
                 side,
                 price,
                 self.order_decimals,
                 self.price_decimals,
                 amount,
-            ) {
-                Ok(_) => return (),
-                Err(error) => {
-                    error!("Problem with place order - {side} {price} {amount} - {error}")
-                }
-            }
-            sleep(Duration::from_millis(500));
-        }
+            ),
+            "Problem with place order"
+        )
     }
 
     fn get_balance(&self) -> f64 {
-        loop {
-            match self.stock.get_balance() {
-                Ok(balance) => return balance,
-                Err(error) => {
-                    error!("Problem with get balance - {error}")
-                }
-            }
-            sleep(Duration::from_millis(500));
-        }
+        with_retry!(
+            RETRY_MS,
+            self.stock.get_balance(),
+            "Problem with get balance"
+        )
     }
 
     fn get_orders_count_by_side(&self) -> OrdersCountBySide {
-        loop {
-            match self.stock.get_orders_count_by_side(&self.ticker) {
-                Ok(data) => return data,
-                Err(error) => {
-                    error!("Problem with get orders counts - {error}")
-                }
-            }
-            sleep(Duration::from_millis(500));
-        }
+        with_retry!(
+            RETRY_MS,
+            self.stock.get_orders_count_by_side(&self.ticker),
+            "Problem with get orders counts"
+        )
     }
 }
