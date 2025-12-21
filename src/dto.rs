@@ -29,24 +29,26 @@ pub struct PaginatedListResponse<T> {
 pub struct AnyResponse {}
 
 pub type PlaceOrderData = BasicResponse<AnyResponse>;
+pub type LiquidateData = BasicResponse<AnyResponse>;
+pub type CancelOrderData = BasicResponse<AnyResponse>;
 pub type CandlesData = BasicResponse<ListResponse<RawCandle>>;
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct BalanceResponse {
+pub struct Balance {
     #[serde(deserialize_with = "as_f64")]
     pub total_margin_balance: f64,
 }
-pub type BalanceData = BasicResponse<ListResponse<BalanceResponse>>;
+pub type BalanceData = BasicResponse<ListResponse<Balance>>;
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct OrderResponse {
+pub struct Order {
+    pub order_id: String,
+    #[serde(deserialize_with = "as_f64")]
+    pub price: f64,
+    #[serde(deserialize_with = "as_f64")]
+    pub qty: f64,
     pub side: Side,
 }
-pub type OrdersData = BasicResponse<PaginatedListResponse<OrderResponse>>;
-
-pub struct OrdersCountBySide {
-    pub sell: i32,
-    pub buy: i32,
-}
+pub type OrdersData = BasicResponse<PaginatedListResponse<Order>>;

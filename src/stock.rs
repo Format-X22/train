@@ -1,6 +1,7 @@
 use crate::candle::Candle;
 use crate::dto::{
-    BalanceData, BasicResponse, CandlesData, OrdersCountBySide, OrdersData, PlaceOrderData,
+    BalanceData, BasicResponse, CancelOrderData, CandlesData, LiquidateData, Order, OrdersData,
+    PlaceOrderData,
 };
 use chrono::Utc;
 use hmac::{Hmac, KeyInit, Mac};
@@ -79,8 +80,8 @@ impl Stock {
         }
     }
 
-    pub fn get_orders_count_by_side(&self, ticker: &str) -> Result<OrdersCountBySide, Whatever> {
-        let mut result = OrdersCountBySide { sell: 0, buy: 0 };
+    pub fn get_orders(&self, ticker: &str) -> Result<Vec<Order>, Whatever> {
+        let mut orders = Vec::new();
         let mut cursor = "".to_string();
 
         loop {
@@ -91,6 +92,7 @@ impl Stock {
                 ("openOnly", "0"),
                 ("orderFilter", "Order"),
                 ("cursor", &cursor),
+                ("limit", "50"),
             ]);
             let response = self.call_with_get(point, params)?;
             let parsed = response
@@ -101,14 +103,11 @@ impl Stock {
             cursor = data.next_page_cursor;
 
             for order in data.list {
-                match order.side {
-                    Side::Buy => result.buy += 1,
-                    Side::Sell => result.sell += 1,
-                }
+                orders.push(order);
             }
 
             if cursor.len() == 0 {
-                return Ok(result);
+                return Ok(orders);
             }
             sleep(Duration::from_millis(10));
         }
@@ -121,9 +120,10 @@ impl Stock {
         price: f64,
         order_decimals: usize,
         price_decimals: usize,
-        amount: f64,
+        qty: f64,
     ) -> Result<(), Whatever> {
-        let qty = format!("{:.1$}", amount, order_decimals);
+        let point = "order/create";
+        let qty = format!("{:.1$}", qty, order_decimals);
         let price = format!("{:.1$}", price, price_decimals);
         let side = side.to_string();
         let order_params = HashMap::from([
@@ -135,9 +135,49 @@ impl Stock {
             ("price", &price),
         ]);
 
-        let main_response = self.call_with_post("order/create", order_params)?;
+        let main_response = self.call_with_post(point, order_params)?;
         let main_parsed = main_response
             .json::<PlaceOrderData>()
+            .whatever_context("On parse json for place order")?;
+
+        self.check_and_extract_data(main_parsed)?;
+
+        Ok(())
+    }
+
+    pub fn liquidate(&self, ticker: &str, order_decimals: usize, qty: f64) -> Result<(), Whatever> {
+        let point = "order/create";
+        let qty = format!("{:.1$}", qty, order_decimals);
+        let side = Side::Buy.to_string();
+        let order_params = HashMap::from([
+            ("category", "linear"),
+            ("symbol", ticker),
+            ("side", &side),
+            ("orderType", "Market"),
+            ("qty", &qty),
+        ]);
+
+        let main_response = self.call_with_post(point, order_params)?;
+        let main_parsed = main_response
+            .json::<LiquidateData>()
+            .whatever_context("On parse json for place order")?;
+
+        self.check_and_extract_data(main_parsed)?;
+
+        Ok(())
+    }
+
+    pub fn cancel_order(&self, ticker: &str, order_id: &str) -> Result<(), Whatever> {
+        let point = "order/cancel";
+        let order_params = HashMap::from([
+            ("category", "linear"),
+            ("symbol", ticker),
+            ("orderId", order_id),
+        ]);
+
+        let main_response = self.call_with_post(point, order_params)?;
+        let main_parsed = main_response
+            .json::<CancelOrderData>()
             .whatever_context("On parse json for place order")?;
 
         self.check_and_extract_data(main_parsed)?;
