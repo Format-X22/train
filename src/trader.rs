@@ -21,6 +21,8 @@ pub struct Trader {
     ticker: String,
     padding_percent: f64,
     capital_percent: f64,
+    candle_size: i64,
+    risk_deduction: f64,
     minimum_size: f64,
     order_decimals: usize,
     price_decimals: usize,
@@ -33,6 +35,8 @@ impl Trader {
         ticker: String,
         padding_percent: f64,
         capital_percent: f64,
+        candle_size: i64,
+        risk_deduction: f64,
         order_decimals: usize,
         price_decimals: usize,
     ) -> Self {
@@ -44,6 +48,8 @@ impl Trader {
             ticker,
             padding_percent,
             capital_percent,
+            candle_size,
+            risk_deduction,
             minimum_size,
             order_decimals,
             price_decimals,
@@ -88,7 +94,7 @@ impl Trader {
         }
 
         let waited_count = i32::max(buy_count, sell_count);
-        let waited_power = (waited_count as f64 * 0.85).trunc() as i32;
+        let waited_power = (waited_count as f64 * self.risk_deduction).trunc() as i32;
         let waited_mul = 1.0 - (self.capital_percent / 100.0);
         let fact_qty = base_amount * (waited_mul.powi(waited_power));
         let qty = f64::max(fact_qty, self.minimum_size);
@@ -111,7 +117,7 @@ impl Trader {
     fn get_new_candle(&mut self) -> Candle {
         repeat_each_ms!(
             RETRY_MS,
-            match self.stock.get_candles(&self.ticker) {
+            match self.stock.get_candles(&self.ticker, self.candle_size) {
                 Ok(candles) => match candles.last() {
                     Some(candle) => {
                         if candle.timestamp > self.last_candle_timestamp {

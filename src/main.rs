@@ -25,6 +25,8 @@ fn main() {
         config.ticker,
         config.padding_percent,
         config.capital_percent,
+        config.candle_size,
+        config.risk_deduction,
         config.order_decimals,
         config.price_decimals,
     );

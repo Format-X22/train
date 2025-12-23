@@ -21,6 +21,8 @@ pub struct Config {
     pub public_key: String,
     pub private_key: String,
     pub ticker: String,
+    pub candle_size: i64,
+    pub risk_deduction: f64,
     pub padding_percent: f64,
     pub capital_percent: f64,
     pub order_decimals: usize,

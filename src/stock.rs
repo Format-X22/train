@@ -41,12 +41,13 @@ impl Stock {
         }
     }
 
-    pub fn get_candles(&self, ticker: &str) -> Result<Vec<Candle>, Whatever> {
+    pub fn get_candles(&self, ticker: &str, candle_size: i64) -> Result<Vec<Candle>, Whatever> {
         let point = "market/kline";
+        let interval = candle_size.to_string();
         let params = HashMap::from([
             ("category", "linear"),
             ("symbol", ticker),
-            ("interval", "1"),
+            ("interval", &interval),
             ("limit", "10"),
         ]);
 
