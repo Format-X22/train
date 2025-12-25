@@ -10,22 +10,22 @@ use std::time::Duration;
 const RETRY_MS: u64 = 500;
 const TRADE_LOOP_MS: u64 = 100;
 
-struct DealValues {
+pub(crate) struct DealValues {
     pub buy: f64,
     pub sell: f64,
     pub qty: f64,
 }
 
 pub struct Trader {
-    stock: Stock,
-    ticker: String,
-    padding_percent: f64,
-    capital_percent: f64,
-    candle_size: i64,
-    risk_deduction: f64,
-    minimum_size: f64,
-    order_decimals: usize,
-    price_decimals: usize,
+    pub(crate) stock: Stock,
+    pub(crate) ticker: String,
+    pub(crate) padding_percent: f64,
+    pub(crate) capital_percent: f64,
+    pub(crate) candle_size: i64,
+    pub(crate) risk_deduction: f64,
+    pub(crate) minimum_size: f64,
+    pub(crate) order_decimals: usize,
+    pub(crate) price_decimals: usize,
     last_candle_timestamp: i64,
 }
 
@@ -61,7 +61,8 @@ impl Trader {
         repeat_each_ms!(TRADE_LOOP_MS, {
             let candle = self.get_new_candle();
             let orders = self.get_orders();
-            let deal_values = self.calc_deal_values(candle.open, &orders);
+            let balance = self.get_balance();
+            let deal_values = self.calc_deal_values(candle.open, &orders, balance);
 
             self.place_order(Side::Buy, deal_values.buy, deal_values.qty);
             self.place_order(Side::Sell, deal_values.sell, deal_values.qty);
@@ -76,11 +77,15 @@ impl Trader {
         })
     }
 
-    fn calc_deal_values(&mut self, base_price: f64, orders: &Vec<Order>) -> DealValues {
+    pub(crate) fn calc_deal_values(
+        &mut self,
+        base_price: f64,
+        orders: &Vec<Order>,
+        balance: f64,
+    ) -> DealValues {
         let padding_size = base_price * (self.padding_percent / 100.0);
         let buy = base_price - padding_size;
         let sell = base_price + padding_size;
-        let balance = self.get_balance();
         let capital_for_order = balance * (self.capital_percent / 100.0);
         let base_amount = capital_for_order / base_price;
         let mut buy_count = 0;

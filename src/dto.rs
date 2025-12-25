@@ -52,3 +52,14 @@ pub struct Order {
     pub side: Side,
 }
 pub type OrdersData = BasicResponse<PaginatedListResponse<Order>>;
+
+impl Clone for Order {
+    fn clone(&self) -> Self {
+        Self {
+            order_id: self.order_id.clone(),
+            price: self.price,
+            qty: self.qty,
+            side: self.side.clone(),
+        }
+    }
+}

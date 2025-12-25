@@ -22,30 +22,22 @@ fn main() {
     info!("Boot...");
 
     let stock = Stock::new(config.public_key, config.private_key);
-
+    let mut trader = Trader::new(
+        stock,
+        config.ticker,
+        config.padding_percent,
+        config.capital_percent,
+        config.candle_size,
+        config.risk_deduction,
+        config.order_decimals,
+        config.price_decimals,
+    );
+    
     if !config.is_simulation {
-        let mut trader = Trader::new(
-            stock,
-            config.ticker,
-            config.padding_percent,
-            config.capital_percent,
-            config.candle_size,
-            config.risk_deduction,
-            config.order_decimals,
-            config.price_decimals,
-        );
-
         trader.trade();
     } else {
         let mut simulator = Simulator::new(
-            stock,
-            config.ticker,
-            config.padding_percent,
-            config.capital_percent,
-            config.candle_size,
-            config.risk_deduction,
-            config.order_decimals,
-            config.price_decimals,
+            trader,
             config.simulate_from,
         );
 
