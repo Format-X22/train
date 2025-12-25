@@ -27,4 +27,6 @@ pub struct Config {
     pub capital_percent: f64,
     pub order_decimals: usize,
     pub price_decimals: usize,
+    pub is_simulation: bool,
+    pub simulate_from: String,
 }

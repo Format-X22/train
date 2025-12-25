@@ -186,7 +186,7 @@ impl Stock {
         Ok(())
     }
 
-    fn call_with_get(
+    pub(crate) fn call_with_get(
         &self,
         point: &str,
         params: HashMap<&str, &str>,
@@ -269,7 +269,7 @@ impl Stock {
         }
     }
 
-    fn check_and_extract_data<T>(&self, parsed: BasicResponse<T>) -> Result<T, Whatever> {
+    pub(crate) fn check_and_extract_data<T>(&self, parsed: BasicResponse<T>) -> Result<T, Whatever> {
         if parsed.ret_code == 0 {
             Ok(parsed.result)
         } else {
