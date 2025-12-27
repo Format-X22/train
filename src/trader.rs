@@ -19,9 +19,10 @@ pub(crate) struct DealValues {
 pub struct Trader {
     pub(crate) stock: Stock,
     pub(crate) ticker: String,
-    pub(crate) padding_percent: f64,
+    pub(crate) padding_percent_sell: f64,
+    pub(crate) padding_percent_buy: f64,
     pub(crate) capital_percent: f64,
-    pub(crate) candle_size: i64,
+    pub(crate) candle_size: String,
     pub(crate) risk_deduction: f64,
     pub(crate) minimum_size: f64,
     pub(crate) order_decimals: usize,
@@ -33,9 +34,10 @@ impl Trader {
     pub fn new(
         stock: Stock,
         ticker: String,
-        padding_percent: f64,
+        padding_percent_sell: f64,
+        padding_percent_buy: f64,
         capital_percent: f64,
-        candle_size: i64,
+        candle_size: String,
         risk_deduction: f64,
         order_decimals: usize,
         price_decimals: usize,
@@ -46,7 +48,8 @@ impl Trader {
         Self {
             stock,
             ticker,
-            padding_percent,
+            padding_percent_sell,
+            padding_percent_buy,
             capital_percent,
             candle_size,
             risk_deduction,
@@ -83,9 +86,10 @@ impl Trader {
         orders: &Vec<Order>,
         balance: f64,
     ) -> DealValues {
-        let padding_size = base_price * (self.padding_percent / 100.0);
-        let buy = base_price - padding_size;
-        let sell = base_price + padding_size;
+        let padding_size_sell = base_price * (self.padding_percent_sell / 100.0);
+        let padding_size_buy = base_price * (self.padding_percent_buy / 100.0);
+        let buy = base_price - padding_size_buy;
+        let sell = base_price + padding_size_sell;
         let capital_for_order = balance * (self.capital_percent / 100.0);
         let base_amount = capital_for_order / base_price;
         let mut buy_count = 0;
@@ -122,7 +126,7 @@ impl Trader {
     fn get_new_candle(&mut self) -> Candle {
         repeat_each_ms!(
             RETRY_MS,
-            match self.stock.get_candles(&self.ticker, self.candle_size) {
+            match self.stock.get_candles(&self.ticker, &self.candle_size) {
                 Ok(candles) => match candles.last() {
                     Some(candle) => {
                         if candle.timestamp > self.last_candle_timestamp {

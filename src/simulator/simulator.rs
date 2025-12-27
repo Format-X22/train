@@ -10,6 +10,10 @@ use std::collections::HashMap;
 
 pub struct Simulator {
     capital: f64,
+    max_stuck: usize,
+    max_stuck_buy: usize,
+    max_stuck_sell: usize,
+    drop_count: i64,
 
     trader: Trader,
     simulate_from_ms: i64,
@@ -33,6 +37,10 @@ impl Simulator {
             position: None,
             sell_orders: HashMap::new(),
             buy_orders: HashMap::new(),
+            max_stuck: 0,
+            max_stuck_buy: 0,
+            max_stuck_sell: 0,
+            drop_count: 0,
         }
     }
 
@@ -45,21 +53,54 @@ impl Simulator {
             self.create_orders(&candle);
             self.handle_collision(&candle);
 
+            let current_stuck_buy = self.buy_orders.len();
+            let current_stuck_sell = self.sell_orders.len();
+            let current_stuck = self.buy_orders.len() + self.sell_orders.len();
+
+            if current_stuck > self.max_stuck {
+                self.max_stuck = current_stuck;
+
+                if self.max_stuck == 4 {
+                    println!(
+                        "Date {} Buy {} Sell {}",
+                        candle.timestamp,
+                        self.buy_orders.len(),
+                        self.sell_orders.len()
+                    );
+                }
+            }
+
+            if current_stuck_buy > self.max_stuck_buy {
+                self.max_stuck_buy = current_stuck_buy
+            }
+
+            if current_stuck_sell > self.max_stuck_sell {
+                self.max_stuck_sell = current_stuck_sell
+            }
+
             // TODO Check collisions
             // TODO Check inline collisions
             // TODO Place new orders
             // TODO Calc orders max count, leverage, liquidation price
         }
 
-        println!("{} {}", self.buy_orders.len(), self.sell_orders.len());
+        println!(
+            "For now - Buy stuck {} Sell stuck {}",
+            self.buy_orders.len(),
+            self.sell_orders.len()
+        );
+        println!("Max stuck {}", self.max_stuck);
+        println!("Max stuck buy {}", self.max_stuck_buy);
+        println!("Max stuck sell {}", self.max_stuck_sell);
+        println!("Drop count {}", self.drop_count);
 
-        for order in self.sell_orders.values() {
+        /*for order in self.sell_orders.values() {
             println!("{} {}", order.price, order.qty);
         }
         println!("----------");
         for order in self.buy_orders.values() {
             println!("{} {}", order.price, order.qty);
-        }
+        }*/
 
         // TODO Print results
     }
@@ -68,7 +109,7 @@ impl Simulator {
         let mut to_remove_sells = Vec::new();
         for order in self.sell_orders.values() {
             if candle.high > order.price {
-                to_remove_sells.push(order.order_id.clone())
+                to_remove_sells.push(order.order_id.clone());
 
                 // TODO -
             }
@@ -83,6 +124,9 @@ impl Simulator {
                 to_remove_buys.push(order.order_id.clone())
 
                 // TODO -
+            } else if candle.high > order.price * 2.0 {
+                to_remove_buys.push(order.order_id.clone());
+                self.drop_count += 1;
             }
         }
         for id in to_remove_buys {
@@ -100,7 +144,9 @@ impl Simulator {
             .values()
             .for_each(|i| current_orders.push(i.clone()));
 
-        let deal = self.trader.calc_deal_values(candle.open, &current_orders, self.capital);
+        let deal = self
+            .trader
+            .calc_deal_values(candle.open, &current_orders, self.capital);
 
         let id = candle.timestamp.to_string();
         let sell_order = Order {
@@ -128,7 +174,7 @@ impl Simulator {
             &database,
             &self.trader.stock,
             &self.trader.ticker,
-            self.trader.candle_size,
+            &self.trader.candle_size,
         );
         info!("Sync completed");
 

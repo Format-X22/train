@@ -25,7 +25,8 @@ fn main() {
     let mut trader = Trader::new(
         stock,
         config.ticker,
-        config.padding_percent,
+        config.padding_percent_sell,
+        config.padding_percent_buy,
         config.capital_percent,
         config.candle_size,
         config.risk_deduction,

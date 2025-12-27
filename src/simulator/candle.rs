@@ -9,7 +9,7 @@ use std::time::Duration;
 const SYNC_FROM: &str = "2021-06-01T00:00:00-00:00";
 
 impl Candle {
-    pub fn sync(database: &Database, stock: &Stock, ticker: &str, candle_size: i64) {
+    pub fn sync(database: &Database, stock: &Stock, ticker: &str, candle_size: &str) {
         let mut last_timestamp = Candle::get_last_candle_timestamp(database);
         let mut is_full_sync = false;
 
@@ -21,7 +21,7 @@ impl Candle {
         }
 
         loop {
-            let candles = match stock.get_candles_from(last_timestamp - 1, ticker, candle_size) {
+            let candles = match stock.get_candles_from(last_timestamp - 1, ticker, &candle_size) {
                 Ok(candles) => candles,
                 Err(err) => {
                     error!("{err}");

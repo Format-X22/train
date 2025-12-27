@@ -9,15 +9,14 @@ impl Stock {
         &self,
         from: i64,
         ticker: &str,
-        candle_size: i64,
+        candle_size: &str,
     ) -> Result<Vec<Candle>, Whatever> {
         let point = "market/kline";
         let from = from.to_string();
-        let interval = candle_size.to_string();
         let params = HashMap::from([
             ("category", "linear"),
             ("symbol", ticker),
-            ("interval", &interval),
+            ("interval", candle_size),
             ("start", &from),
             ("limit", "1000"),
         ]);
